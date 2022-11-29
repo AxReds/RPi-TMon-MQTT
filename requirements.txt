@@ -1,1 +1,2 @@
-paho.mqtt.client == 1.4.0
+paho.mqtt.client==1.4.0
+RPi.GPIO==0.7.0
