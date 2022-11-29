@@ -23,10 +23,9 @@
 #
 
 # import
-import time
+import time, os, sys
 import paho.mqtt.client as mqtt #Import Paho MQTT Library
 import json #Import json library
-import os, sys
 #include gpiozero library function to simplify the code
 from gpiozero import CPUTemperature
 
@@ -45,7 +44,7 @@ def on_connect(client, userdata, flags, rc) :
 
 #initialize json config file object
 try:
-    config_json = open('./config.json', 'r')
+    config_json = open (os.path.join(os.path.dirname(__file__), './config.json'), 'r') 
 except:
     print ('Configuration file not found.\n')
     answ = input ('Please type "yes" to create a default file:')
