@@ -67,11 +67,10 @@ else:
         topic = dati["topic"] #sets MQTT Topic
 
 
-
-
 # instantiate paho MQTT client
 client = mqtt.Client()
-#set usrname and password
+
+#set username and password
 client.username_pw_set(username, password)
 
 # add on_connect function to on_connect event
@@ -84,7 +83,6 @@ client.connect(Broker, port, time_out)
 client.loop_start()
 
 # send messages every 2 seconds
-i = 0
 while True:
     #
     #Read the current temperature
