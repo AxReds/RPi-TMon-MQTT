@@ -26,6 +26,21 @@
 import time
 import paho.mqtt.client as mqtt #Import Paho MQTT Library
 import json #Import json library
+import os, sys
+#include gpiozero library function to simplify the code
+from gpiozero import CPUTemperature
+
+
+#
+#Define a function that returns current CPU temperature in float
+def CPUTempF():
+    #Read the temperature from Raspberry PI internal sensor
+    cpuTemp = CPUTemperature()
+    return(float(cpuTemp.temperature))
+#
+# MQTT on connect function
+def on_connect(client, userdata, flags, rc) :
+    print("Client che invia messaggi connesso con codice: " + str(rc))
 
 
 #initialize json config file object
@@ -46,20 +61,13 @@ else:
         #initialiaze variables
         username = dati['username']
         password = dati['password']
-        server = dati["server"]
+        Broker = dati["server"] # sets broker IP address
         port = dati["port"]
         time_out = dati["timeout"]
+        topic = dati["topic"] #sets MQTT Topic
 
 
-# broker IP address
-Broker = server
 
-# publish topic
-topic = "test/topic"
-
-# on connect function
-def on_connect(client, userdata, flags, rc) :
-    print("Client che invia messaggi connesso con codice: " + str(rc))
 
 # instantiate paho MQTT client
 client = mqtt.Client()
@@ -78,8 +86,10 @@ client.loop_start()
 # send messages every 2 seconds
 i = 0
 while True:
-    i = i + 1
-    client.publish(topic, "Test: " + str(i))
+    #
+    #Read the current temperature
+    temp = CPUTempF()
+    client.publish(topic, temp)
     time.sleep(2)
 
 
