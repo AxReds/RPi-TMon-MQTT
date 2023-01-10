@@ -39,7 +39,7 @@ def CPUTempF():
 #
 # MQTT on connect function
 def on_connect(client, userdata, flags, rc) :
-    print("Client che invia messaggi connesso con codice: " + str(rc))
+    print("Process started and exited with code: " + str(rc))
 
 
 #initialize json config file object
