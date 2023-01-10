@@ -1,7 +1,3 @@
-#!/usr/bin/env python3
-#to make the script executable added the above line (a shebang: a # + a !)
-#read the readme file for details
-
 #Raspberry-Pi Temperature Monitoring which publishes data to MQTT-Brocker (RPi-TMon-MQTT) - v1.0.
 #Copyright (C) 2020 Alessio Rossini <alessior@live.com>
 #Original source code available at https://github.com/AxReds/RPi-TMon-MQTT
@@ -26,8 +22,8 @@
 import time, os, sys
 import paho.mqtt.client as mqtt #Import Paho MQTT Library
 import json #Import json library
-#include gpiozero library function to simplify the code
-from gpiozero import CPUTemperature
+if os.name != 'nt':
+    from gpiozero import CPUTemperature #include gpiozero library function to simplify the code
 
 
 #
@@ -37,19 +33,34 @@ def CPUTempF():
     cpuTemp = CPUTemperature()
     return(float(cpuTemp.temperature))
 #
-# MQTT on connect function
+# Define function on_connect for MQTT connection
 def on_connect(client, userdata, flags, rc) :
     print("Process started and exited with code: " + str(rc))
 
-
-#initialize json config file object
+#Initialize setup KO
+set_up_ok=False
+    
 try:
-    config_json = open (os.path.join(os.path.dirname(__file__), './config.json'), 'r') 
+    #verifies file exist
+    config_json = open (os.path.join(os.path.dirname(__file__), 'config.json'), 'r') 
 except:
-    print ('Configuration file not found.\n')
-    answ = input ('Please type "yes" to create a default file:')
-    if  answ.lower() == 'yes' or answ.lower() == 'y':
-        print ('File created!')
+    #file does not exist and then creates it
+    print ('\n\nConfiguration file not found.')
+    answ = input ('Please type "yes" or "y" to create a default file:')
+    if  answ.lower() == 'yes' or answ.lower() == 'y' or answ.lower() =='':
+        #defines json file structure
+        dictionary = {'username':'your_username',
+                      'password':'your__password',
+                      'server':'your_mqqt_server_ip_or_fqdn',
+                      'port':'your_server_tcp_port',
+                      'timeout':'your_server_timeout',
+                      'topic':'your_topic'}
+        
+        #creates a new file
+        with open (os.path.join(os.path.dirname(__file__), 'config.json'), 'a') as f:
+            #format the json data and write to file
+            f.write (json.dumps (dictionary, indent=4))
+        print ('File created!\nPlease, update the file ' + os.path.join(os.path.dirname(__file__), 'config.json') + ' and rerun the program.\n\n')
 else:
     try:
         #read data from file 
@@ -58,35 +69,34 @@ else:
         print ('Invalid data in JSON config file.\n')
     else:
         #initialiaze variables
-        username = dati['username']
-        password = dati['password']
-        Broker = dati["server"] # sets broker IP address
-        port = dati["port"]
-        time_out = dati["timeout"]
-        topic = dati["topic"] #sets MQTT Topic
+        username = dati['username'] #sets MQTT username
+        password = dati['password'] #sets MQTT password
+        Broker = dati["server"]     #sets MQTT broker IP address
+        port = dati["port"]         #sets MQTT port 
+        time_out = dati["timeout"]  #sets MQTT timeout
+        topic = dati["topic"]       #sets MQTT Topic
+        set_up_ok = True
 
+if set_up_ok:
+    # instantiate paho MQTT client
+    client = mqtt.Client()
 
-# instantiate paho MQTT client
-client = mqtt.Client()
+    #set username and password
+    client.username_pw_set(username, password)
 
-#set username and password
-client.username_pw_set(username, password)
+    # add on_connect function to on_connect event
+    client.on_connect = on_connect
 
-# add on_connect function to on_connect event
-client.on_connect = on_connect
+    # connect paho client to mosquitto broker (IP, port, timeout)
+    client.connect(Broker, port, time_out)
 
-# connect paho client to mosquitto broker (IP, port, timeout)
-client.connect(Broker, port, time_out)
+    # put client's loop in background
+    client.loop_start()
 
-# put client's loop in background
-client.loop_start()
-
-# send messages every 2 seconds
-while True:
-    #
-    #Read the current temperature
-    temp = CPUTempF()
-    client.publish(topic, temp)
-    time.sleep(2)
-
-
+    # send messages every 2 seconds
+    while True:
+        #
+        #Read the current temperature
+        temp = CPUTempF()
+        client.publish(topic, temp)
+        time.sleep(2)
