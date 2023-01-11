@@ -22,7 +22,7 @@
 import time, os, sys
 import paho.mqtt.client as mqtt #Import Paho MQTT Library
 import json #Import json library
-if os.name != 'nt':
+if os.uname()[4] == 'aarch64': #verify if running on a Raspberry Pi 64bit architecture
     from gpiozero import CPUTemperature #include gpiozero library function to simplify the code
 
 
@@ -78,25 +78,28 @@ else:
         set_up_ok = True
 
 if set_up_ok:
-    # instantiate paho MQTT client
-    client = mqtt.Client()
+    try:
+        # instantiate paho MQTT client
+        client = mqtt.Client()
 
-    #set username and password
-    client.username_pw_set(username, password)
+        #set username and password
+        client.username_pw_set(username, password)
 
-    # add on_connect function to on_connect event
-    client.on_connect = on_connect
+        # add on_connect function to on_connect event
+        client.on_connect = on_connect
 
-    # connect paho client to mosquitto broker (IP, port, timeout)
-    client.connect(Broker, port, time_out)
+        # connect paho client to mosquitto broker (IP, port, timeout)
+        client.connect(Broker, port, time_out)
 
-    # put client's loop in background
-    client.loop_start()
+        # put client's loop in background
+        client.loop_start()
 
-    # send messages every 2 seconds
-    while True:
-        #
-        #Read the current temperature
-        temp = CPUTempF()
-        client.publish(topic, temp)
-        time.sleep(2)
+        # send messages every 2 seconds
+        while True:
+            #
+            #Read the current temperature
+            temp = CPUTempF()
+            client.publish(topic, temp)
+            time.sleep(2)
+    except:
+        print("\nSomething went wrong in connecting with the broker. Please check the config file and re-run.")
